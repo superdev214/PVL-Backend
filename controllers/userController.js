@@ -10,7 +10,7 @@ exports.register = async (req, res) => {
     // Validate user input : frontend side
     // check if user already exist
     console.log("register");
-    const oldUser = await User.findOne({ email : email.toLowerCase()});
+    const oldUser = await User.findOne({ email: email.toLowerCase() });
 
     if (oldUser)
       return res.status(409).send("This email already exist. Please Login");
@@ -50,10 +50,24 @@ exports.login = async (req, res) => {
     // if (!(email && password)) res.status(400).send("All input is required");
     //Validate if the user exist in database
     console.log(email);
-    if(email === 'admin' && password === "12345678")
-        res.status(200).send("Admin success");
+    if (email === "admin" && password === "12345678") {
+      const token = jwt.sign(
+        {
+          user_email: "admin@admin.gmail",
+          user_name: "admin",
+        },
+        jwt_key,
+        { expiresIn: "30d" }
+      );
+      // save user token
+      res.status(200).send({
+        msg: "success",
+        token: token,
+      });
+      res.status(200).send("Admin success");
+    }
 
-    const user = await User.findOne({ email : email.toLowerCase()});
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (user) {
       console.log("step 1");
       var passwordIsValid = bcrypt.compareSync(
@@ -65,7 +79,8 @@ exports.login = async (req, res) => {
       const token = jwt.sign(
         {
           user_id: user._id,
-          email,
+          user_email: user.email,
+          user_name: user.name,
         },
         jwt_key,
         { expiresIn: "30d" }
@@ -84,5 +99,25 @@ exports.login = async (req, res) => {
     }
   } catch (err) {
     console.log(err);
+  }
+};
+
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const token = req.body.token || req.headers["x-access-token"];
+    try {
+      console.log("start");
+      const decoded = jwt.verify(token, config.jwt_key);
+      const user = {
+        name: decoded.user_name,
+        email: decoded.user_email,
+      };
+      
+      res.status(200).send(user);
+    } catch (err) {
+      return res.status(401).send("You need to log in again!");
+    }
+  } catch (error) {
+    res.status(409).send(error);
   }
 };

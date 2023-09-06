@@ -10,6 +10,8 @@ module.exports = (app) => {
   // User Router
   router.post("/register-user",user.register);
   router.post("/login",user.login);
+  router.get("/get-current-user",user.getCurrentUser);
+
   router.post("/register-account-type" ,upload.single('avatar'),accountTypeList.addType);
   router.get("/get-all-account-type",accountTypeList.findAllorName);
   // router.p`ost("/login", user.login);
