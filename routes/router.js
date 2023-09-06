@@ -11,6 +11,7 @@ module.exports = (app) => {
   router.post("/register-user",user.register);
   router.post("/login",user.login);
   router.post("/register-account-type" ,upload.single('avatar'),accountTypeList.addType);
+  router.get("/get-all-account-type",accountTypeList.findAllorName);
   // router.p`ost("/login", user.login);
   // Tutorial Router
   //  router.get("/",    auth,tutorials.findAllorTitle);

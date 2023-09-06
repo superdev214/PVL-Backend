@@ -6,6 +6,8 @@ exports.addType = async (req, res) => {
     const account_type = {
       typename: req.body.typename.toLowerCase(),
       description: req.body.description,
+      priceSixMonths: req.body.priceSixMonths,
+      priceLifeTime: req.body.priceLifeTime,
       avatar: req.file.filename,
       sellCount: 0,
     };
@@ -13,42 +15,42 @@ exports.addType = async (req, res) => {
       typename: account_type.typename,
     });
     if (oldType)
-      return res.status(409).send("This account already exist. Please register another one.");
+      return res
+        .status(409)
+        .send("This account already exist. Please register another one.");
     const list = await AccountType.create(account_type);
-    res.status(200).send(account_type);
+   return res.status(200).send(account_type);
   } catch (error) {
     res.status(409).send(error);
   }
 };
 
-// exports.findAllorTitle = (req, res) => {
-//   const title = req.query.title;
-//   console.log(title);
-//   if ((title === "") | (title === undefined)) {
-//     console.log("right");
-//     TutorialSchema.find()
-//       .then((data) => {
-//         res.send(data);
-//       })
-//       .catch((err) => {
-//         res.status(500).send({
-//           message: "Some errors occured",
-//         });
-//       });
-//   } else {
-//     console.log("false");
-//     TutorialSchema.find({ title: `${title}` })
-//       .then((data) => {
-//         res.send(data);
-//         console.log(data);
-//       })
-//       .catch((err) => {
-//         res.status(500).send({
-//           message: "Some errors occured",
-//         });
-//       });
-//   }
-// };
+exports.findAllorName = (req, res) => {
+  // const title = req.query.title;
+  console.log("findall");
+  // if ((title === "") | (title === undefined)) {
+  console.log("right");
+  AccountType.find()
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send("Some errors occured");
+    });
+  // } else {
+  //   console.log("false");
+  //   TutorialSchema.find({ title: `${title}` })
+  //     .then((data) => {
+  //       res.send(data);
+  //       console.log(data);
+  //     })
+  //     .catch((err) => {
+  //       res.status(500).send({
+  //         message: "Some errors occured",
+  //       });
+  //     });
+  // }
+};
 // exports.findByTitle = (req, res) => {
 //   const title = req.query.title;
 //   console.log(req.query);

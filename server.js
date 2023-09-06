@@ -18,7 +18,7 @@ app.use(
 //end
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(`${__dirname}/public/account/avatars`));
+app.use(express.static(`${__dirname}/public/`));
 /////////////////////////////////////////////
 require("./routes/router")(app);
 app.listen(config.app.port);
