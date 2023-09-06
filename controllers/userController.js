@@ -61,10 +61,9 @@ exports.login = async (req, res) => {
       );
       // save user token
       res.status(200).send({
-        msg: "success",
+        msg: "Admin success",
         token: token,
       });
-      res.status(200).send("Admin success");
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
