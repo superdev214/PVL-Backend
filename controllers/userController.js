@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const User = require("../model/user");
+const AccountType = require("../model/accountType");
 const jwt = require("jsonwebtoken");
 const config = require("../config/config");
 
@@ -111,12 +112,43 @@ exports.getCurrentUser = async (req, res) => {
         name: decoded.user_name,
         email: decoded.user_email,
       };
-      
+
       res.status(200).send(user);
     } catch (err) {
       return res.status(401).send("You need to log in again!");
     }
   } catch (error) {
     res.status(409).send(error);
+  }
+};
+
+exports.addAccountToCart = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { user_email, typename } = req.body;
+    const user = await User.findOne({ email: user_email.toLowerCase() });
+    const existingAccountType = user.addcarts.find(
+      (item) => item.typename === typename
+    );
+    if (existingAccountType) {
+      existingAccountType.count += 1;
+    } else {
+      user.addcarts.push({ typename: typename, count: 1 });
+    }
+    await user.save();
+
+    let total_price = 0;
+    console.log(user.addcarts);
+    for( const item of user.addcarts){
+     const accountType = await AccountType.findOne({typename:item.typename});
+     console.log(item.typename)
+     console.log(accountType);
+      if(accountType){
+        total_price += accountType.priceLifeTime * item.count;
+      }
+    }
+    res.status(200).send({ message: "success" , total_price : total_price});
+  } catch (error) {
+    res.status(500).json("Internal server error");
   }
 };

@@ -13,6 +13,8 @@ module.exports = (app) => {
   router.post("/login", user.login);
   router.get("/get-current-user", user.getCurrentUser);
 
+  router.post("/add-account-to-cart", user.addAccountToCart);
+
   router.post(
     "/register-account-type",
     upload.single("avatar"),
