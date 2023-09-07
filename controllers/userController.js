@@ -124,7 +124,6 @@ exports.getCurrentUser = async (req, res) => {
 
 exports.addAccountToCart = async (req, res) => {
   try {
-    console.log(req.body);
     const { user_email, typename } = req.body;
     const user = await User.findOne({ email: user_email.toLowerCase() });
     const existingAccountType = user.addcarts.find(
@@ -136,19 +135,16 @@ exports.addAccountToCart = async (req, res) => {
       user.addcarts.push({ typename: typename, count: 1 });
     }
     await user.save();
-
     let total_price = 0;
     console.log(user.addcarts);
     for( const item of user.addcarts){
      const accountType = await AccountType.findOne({typename:item.typename});
-     console.log(item.typename)
-     console.log(accountType);
       if(accountType){
         total_price += accountType.priceLifeTime * item.count;
       }
     }
     res.status(200).send({ message: "success" , total_price : total_price});
   } catch (error) {
-    res.status(500).json("Internal server error");
+    res.status(500).send("Internal server error");
   }
 };
