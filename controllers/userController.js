@@ -10,7 +10,6 @@ exports.register = async (req, res) => {
     const { name, email, password } = req.body;
     // Validate user input : frontend side
     // check if user already exist
-    console.log("register");
     const oldUser = await User.findOne({ email: email.toLowerCase() });
 
     if (oldUser)
@@ -50,7 +49,6 @@ exports.login = async (req, res) => {
     // Validate your input
     // if (!(email && password)) res.status(400).send("All input is required");
     //Validate if the user exist in database
-    console.log(email);
     if (email === "admin" && password === "12345678") {
       const token = jwt.sign(
         {
@@ -69,7 +67,6 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (user) {
-      console.log("step 1");
       var passwordIsValid = bcrypt.compareSync(
         req.body.password,
         user.password
@@ -106,7 +103,7 @@ exports.getCurrentUser = async (req, res) => {
   try {
     const token = req.body.token || req.headers["x-access-token"];
     try {
-      console.log("start");
+      console.log("start current user");
       const decoded = jwt.verify(token, config.jwt_key);
       const user = {
         name: decoded.user_name,
@@ -136,14 +133,37 @@ exports.addAccountToCart = async (req, res) => {
     }
     await user.save();
     let total_price = 0;
-    console.log(user.addcarts);
-    for( const item of user.addcarts){
-     const accountType = await AccountType.findOne({typename:item.typename});
-      if(accountType){
+    for (const item of user.addcarts) {
+      const accountType = await AccountType.findOne({
+        typename: item.typename,
+      });
+      if (accountType) {
         total_price += accountType.priceLifeTime * item.count;
       }
     }
-    res.status(200).send({ message: "success" , total_price : total_price});
+    res.status(200).send({ message: "success", total_price: total_price });
+  } catch (error) {
+    res.status(500).send("Internal server error");
+  }
+};
+exports.getAllCart = async (req, res) => {
+  try {
+    console.log("hi");
+    const email = req.query.email;
+    console.log(email);
+    const user = await User.findOne({ email: email.toLowerCase() });
+    let total_price = 0;
+    console.log(user);
+    for (const item of user.addcarts) {
+      const accountType = await AccountType.findOne({
+        typename: item.typename,
+      });
+      if (accountType) {
+        total_price += accountType.priceLifeTime * item.count;
+      }
+    }
+    res.status(200).send({ addcart: user.addcarts, totalPrice: total_price });
+    // res.status(200).send("okay");
   } catch (error) {
     res.status(500).send("Internal server error");
   }
