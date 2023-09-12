@@ -19,7 +19,7 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(Number(15));
     const hashPassword = await bcrypt.hash(password, salt);
     const user = await User.create({
-      name,
+      name: name.toLowerCase(),
       email: email.toLowerCase(),
       password: hashPassword,
     });
@@ -46,9 +46,6 @@ exports.login = async (req, res) => {
   try {
     // Get user data
     const { email, password } = req.body;
-    // Validate your input
-    // if (!(email && password)) res.status(400).send("All input is required");
-    //Validate if the user exist in database
     if (email === "admin" && password === "12345678") {
       const token = jwt.sign(
         {
@@ -65,7 +62,9 @@ exports.login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({
+      $or: [{ email: email.toLowerCase() }, { name: email.toLowerCase() }],
+    });
     if (user) {
       var passwordIsValid = bcrypt.compareSync(
         req.body.password,
