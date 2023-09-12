@@ -175,7 +175,7 @@ exports.sendAccountInfoByEmail = async (req, res) => {
         console.log(typename, count);
         const accounts = [];
         for (let i = 0; i < count; i++) {
-          const account = await Account.findOne({
+          const account = await Account.findOneAndDelete({
             typename: typename,
           });
           const { email, password } = account;
