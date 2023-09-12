@@ -4,7 +4,7 @@ module.exports = (app) => {
   const tutorials = require("../controllers/tutorialController.js");
   const user = require("../controllers/userController");
   const accountTypeList = require("../controllers/accountTypeController");
-  const account = require("../controllers/accountController")
+  const account = require("../controllers/accountController");
   const upload = require("../utils/upload");
 
   let router = require("express").Router();
@@ -14,7 +14,7 @@ module.exports = (app) => {
   router.get("/get-current-user", user.getCurrentUser);
 
   router.post("/add-account-to-cart", user.addAccountToCart);
-  router.get("/get-all-cart",user.getAllCart);
+  router.get("/get-all-cart", user.getAllCart);
 
   router.post(
     "/register-account-type",
@@ -22,8 +22,9 @@ module.exports = (app) => {
     accountTypeList.addType
   );
   router.get("/get-all-account-type/", accountTypeList.findAllorName);
- router.post("/add-account", account.addAccount)
+  router.post("/add-account", account.addAccount);
 
+  router.post('/send-account-info',user.sendAccountInfoByEmail);
   // router.p`ost("/login", user.login);
   // Tutorial Router
   //  router.get("/",    auth,tutorials.findAllorTitle);

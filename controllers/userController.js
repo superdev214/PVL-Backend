@@ -1,9 +1,10 @@
 const bcrypt = require("bcrypt");
 const User = require("../model/user");
 const AccountType = require("../model/accountType");
+const Account = require("../model/account");
 const jwt = require("jsonwebtoken");
 const config = require("../config/config");
-
+const nodemailer = require("nodemailer");
 const jwt_key = config.jwt_key;
 exports.register = async (req, res) => {
   try {
@@ -147,12 +148,9 @@ exports.addAccountToCart = async (req, res) => {
 };
 exports.getAllCart = async (req, res) => {
   try {
-    console.log("hi");
     const email = req.query.email;
-    console.log(email);
     const user = await User.findOne({ email: email.toLowerCase() });
     let total_price = 0;
-    console.log(user);
     for (const item of user.addcarts) {
       const accountType = await AccountType.findOne({
         typename: item.typename,
@@ -163,6 +161,64 @@ exports.getAllCart = async (req, res) => {
     }
     res.status(200).send({ addcart: user.addcarts, totalPrice: total_price });
     // res.status(200).send("okay");
+  } catch (error) {
+    res.status(500).send("Internal server error");
+  }
+};
+exports.sendAccountInfoByEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+    const accountInfo = await Promise.all(
+      user.addcarts.map(async (item) => {
+        const { typename, count } = item;
+        console.log(typename, count);
+        const accounts = [];
+        for (let i = 0; i < count; i++) {
+          const account = await Account.findOne({
+            typename: typename,
+          });
+          const { email, password } = account;
+          console.log(email, password);
+          accounts.push({ email, password });
+        }
+        return { typename: typename, accounts };
+      })
+    );
+    console.log("accountInfo", accountInfo);
+    let transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: "registration@flexon.io",
+        pass: "ruvwgiaemvaqpmvh",
+      },
+    });
+    let emailContent = "";
+    accountInfo.forEach((item) => {
+      const typenameFormatted = item.typename.charAt(0).toUpperCase() + item.typename.slice(1);
+      emailContent += `<p style="font-size: 28px; font-weight: bold; color:blue">${typenameFormatted} account</p>`;
+      item.accounts.forEach((account, index) => {
+        emailContent += `<p style="font-size: 20px;">${index + 1}. Email: ${account.email}</p><br>`;
+        emailContent += `<p style="font-size: 20px;">   Password: ${account.password}</p><br>`;
+      });
+      emailContent += "<br>";
+    });
+    emailContent +=`<p style="font-size:20px; font-weight:bold; color:red">Note: If your account information is incorrect or there is a problem with your account, please contact us.</p>`;
+    const mailOptions = {
+      from: "registration@flexon.io",
+      to: email,
+      subject: "Account Information",
+      html: emailContent,
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        res.status(500).send("Error sending email");
+      } else {
+        console.log("Email sent successfully");
+        res.status(200).send("Email sent successfully");
+      }
+    });
   } catch (error) {
     res.status(500).send("Internal server error");
   }
