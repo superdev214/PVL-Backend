@@ -1,7 +1,6 @@
 const auth = require("../middleware/auth");
 
 module.exports = (app) => {
-  const tutorials = require("../controllers/tutorialController.js");
   const user = require("../controllers/userController");
   const accountTypeList = require("../controllers/accountTypeController");
   const account = require("../controllers/accountController");

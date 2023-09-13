@@ -5,6 +5,9 @@ const Account = require("../model/account");
 const jwt = require("jsonwebtoken");
 const config = require("../config/config");
 const nodemailer = require("nodemailer");
+const dotenv = require("dotenv");
+dotenv.config();
+
 const jwt_key = config.jwt_key;
 exports.register = async (req, res) => {
   try {
@@ -47,7 +50,10 @@ exports.login = async (req, res) => {
   try {
     // Get user data
     const { email, password } = req.body;
-    if (email === "admin" && password === "12345678") {
+    if (
+      email === process.env.ADMIN_NAME &&
+      password === process.env.ADMIN_PASS
+    ) {
       const token = jwt.sign(
         {
           user_email: "admin@admin.gmail",
@@ -165,61 +171,173 @@ exports.getAllCart = async (req, res) => {
     res.status(500).send("Internal server error");
   }
 };
+//   try {
+//     const { email } = req.body;
+//     const user = await User.findOne({ email: email.toLowerCase() });
+
+//     // Check if user's addcarts array is empty
+//     if (!user.addcarts || user.addcarts.length === 0) {
+//       return res.status(404).send("No accounts available in addcarts.");
+//     }
+
+//     const accountInfo = await Promise.all(
+//       user.addcarts.map(async (item) => {
+//         const { typename, count } = item;
+//         console.log(typename, count);
+//         const accounts = [];
+//         const availableAccounts = await Account.find({ typename: typename });
+
+//         // Check if there are any accounts available for the requested typename
+//         if (availableAccounts.length === 0) {
+//           return res.status(404).send(`No ${typename} accounts available.`);
+//         }
+
+//         for (let i = 0; i < count; i++) {
+//           try {
+//             const account = await Account.findOneAndDelete({
+//               typename: typename,
+//             });
+//             const { email, password } = account;
+//             console.log(email, password);
+//             accounts.push({ email, password });
+//           } catch (error) {
+//             return res.status(500).send("Error occurred while processing accounts.");
+//             // Handle the error case here (e.g., log error, skip item, etc.)
+//           }
+//         }
+//         return { typename: typename, accounts };
+//       })
+//     );
+
+//     console.log("accountInfo", accountInfo);
+//     let transporter = nodemailer.createTransport({
+//       service: "Gmail",
+//       auth: {
+//         user: "registration@flexon.io",
+//         pass: "ruvwgiaemvaqpmvh",
+//       },
+//     });
+//     let emailContent = "";
+//     accountInfo.forEach((item) => {
+//       const typenameFormatted = item.typename.charAt(0).toUpperCase() + item.typename.slice(1);
+//       emailContent += `<p style="font-size: 28px; font-weight: bold; color:blue">${typenameFormatted} account</p>`;
+//       item.accounts.forEach((account, index) => {
+//         emailContent += `<p style="font-size: 20px;">${index + 1}. Email: ${account.email}</p><br>`;
+//         emailContent += `<p style="font-size: 20px;">   Password: ${account.password}</p><br>`;
+//       });
+//       emailContent += "<br>";
+//     });
+//     emailContent +=`<p style="font-size:20px; font-weight:bold; color:red">Note: If your account information is incorrect or there is a problem with your account, please contact us.</p>`;
+//     const mailOptions = {
+//       from: "registration@flexon.io",
+//       to: email,
+//       subject: "Account Information",
+//       html: emailContent,
+//     };
+//     transporter.sendMail(mailOptions, async (error, info) => {
+//       if (error) {
+//         console.log(error);
+//         res.status(500).send("Error sending information.");
+//       } else {
+//         console.log("Email sent successfully");
+//         user.addcarts.splice(0, user.addcarts.length);
+//         await user.save();
+//         res.status(200).send({msg:"Success", addcart:user.addcarts});
+//       }
+//     });
+//   } catch (error) {
+//     res.status(500).send("Internal server error");
+//   }
+// };
 exports.sendAccountInfoByEmail = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email: email.toLowerCase() });
+    let flag = true;
+    if (!user.addcarts || user.addcarts.length === 0) {
+      return res.status(404).send("No accounts available in addcarts.");
+    }
+
     const accountInfo = await Promise.all(
       user.addcarts.map(async (item) => {
         const { typename, count } = item;
         console.log(typename, count);
+  
         const accounts = [];
-        for (let i = 0; i < count; i++) {
-          const account = await Account.findOneAndDelete({
-            typename: typename,
-          });
-          const { email, password } = account;
-          console.log(email, password);
-          accounts.push({ email, password });
+        const availableAccounts = await Account.find({ typename: typename });
+
+        if (availableAccounts.length === 0) {
+          flag = false;
+          return res.status(404).send(`No ${typename} accounts available.`);
         }
+
+        for (let i = 0; i < count; i++) {
+          try {
+            const account = await Account.findOneAndDelete({
+              typename: typename,
+            });
+            const { email, password } = account;
+            console.log(email, password);
+            accounts.push({ email, password });
+          } catch (error) {
+            flag = false;
+            return res
+              .status(500)
+              .send(
+                "There is not enough stock for the account you applied for. Admin will add account to stock soon."
+              );
+          }
+        }
+
         return { typename: typename, accounts };
       })
     );
-    console.log("accountInfo", accountInfo);
-    let transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: "registration@flexon.io",
-        pass: "ruvwgiaemvaqpmvh",
-      },
-    });
-    let emailContent = "";
-    accountInfo.forEach((item) => {
-      const typenameFormatted = item.typename.charAt(0).toUpperCase() + item.typename.slice(1);
-      emailContent += `<p style="font-size: 28px; font-weight: bold; color:blue">${typenameFormatted} account</p>`;
-      item.accounts.forEach((account, index) => {
-        emailContent += `<p style="font-size: 20px;">${index + 1}. Email: ${account.email}</p><br>`;
-        emailContent += `<p style="font-size: 20px;">   Password: ${account.password}</p><br>`;
+
+    if (flag) {
+      let transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.MAILER_EMAIL,
+          pass: process.env.MAILER_PASS,
+        },
       });
-      emailContent += "<br>";
-    });
-    emailContent +=`<p style="font-size:20px; font-weight:bold; color:red">Note: If your account information is incorrect or there is a problem with your account, please contact us.</p>`;
-    const mailOptions = {
-      from: "registration@flexon.io",
-      to: email,
-      subject: "Account Information",
-      html: emailContent,
-    };
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-        res.status(500).send("Error sending email");
-      } else {
-        console.log("Email sent successfully");
-        res.status(200).send("Email sent successfully");
-      }
-    });
+
+      let emailContent = "";
+
+      accountInfo.forEach((item) => {
+        const typenameFormatted =
+          item.typename.charAt(0).toUpperCase() + item.typename.slice(1);
+        emailContent += `<p style="font-size: 28px; font-weight: bold; color:blue">${typenameFormatted} account</p>`;
+        item.accounts.forEach((account, index) => {
+          emailContent += `<p style="font-size: 20px;">${index + 1}. Email: ${
+            account.email
+          }</p><br>`;
+          emailContent += `<p style="font-size: 20px;">   Password: ${account.password}</p><br>`;
+        });
+        emailContent += "<br>";
+      });
+
+      emailContent += `<p style="font-size:20px; font-weight:bold; color:red">Note: If your account information is incorrect or there is a problem with your account, please contact us.</p>`;
+
+      const mailOptions = {
+        from: "registration@flexon.io",
+        to: email,
+        subject: "Account Information",
+        html: emailContent,
+      };
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          res.status(500).send("Error sending information.");
+        } else {
+          console.log("Email sent successfully");
+          user.addcarts.splice(0, user.addcarts.length);
+          await user.save();
+          res.status(200).send({ msg: "Success", addcart: user.addcarts });
+        }
+      });
+    }
   } catch (error) {
-    res.status(500).send("Internal server error");
+    console.log(error);
   }
 };

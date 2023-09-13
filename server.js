@@ -1,9 +1,11 @@
 const express = require("express");
 const config = require("././config/config");
-
+const dotenv = require("dotenv");
 const cors = require("cors");
 const db = require("./model/");
 const app = express();
+dotenv.config();
+console.log(process.env.DATABASE_URL);
 /**
  *  Feature : This code allows you to access the server
               In detail, 3001 port can fetch this server
